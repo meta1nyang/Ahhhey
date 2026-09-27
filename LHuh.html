@@ -1,0 +1,3836 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width,
+initial-scale=1,
+maximum-scale=1,
+user-scalable=no">
+
+<title>전화</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+:root{
+  --bg:#f2f2f7;
+  --card:#ffffff;
+  --key:#e9e9ee;
+  --key-active:#d4d4d8;
+  --text:#111111;
+  --sub:#77777d;
+  --line:#dedee3;
+
+  --blue:#007aff;
+  --green:#34c759;
+  --red:#ff3b30;
+}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,
+body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+
+  background:var(--bg);
+  color:var(--text);
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "Segoe UI",
+    sans-serif;
+}
+
+button{
+  font:inherit;
+  border:0;
+  outline:0;
+  color:inherit;
+}
+
+.app{
+  position:relative;
+
+  width:100%;
+  max-width:480px;
+  height:100dvh;
+
+  margin:auto;
+
+  background:var(--bg);
+
+  overflow:hidden;
+}
+
+
+/* =====================================================
+   SETUP
+===================================================== */
+
+.setup{
+
+  width:100%;
+  height:100%;
+
+  display:flex;
+  flex-direction:column;
+
+  justify-content:center;
+
+  padding:30px;
+}
+
+.setup-icon{
+
+  width:78px;
+  height:78px;
+
+  border-radius:23px;
+
+  background:var(--green);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:40px;
+
+  color:white;
+
+  box-shadow:
+    0 8px 25px rgba(52,199,89,.25);
+
+  margin-bottom:25px;
+}
+
+.setup h1{
+
+  margin:0 0 8px;
+
+  font-size:35px;
+
+  font-weight:750;
+}
+
+.setup p{
+
+  margin:0 0 28px;
+
+  color:var(--sub);
+
+  line-height:1.5;
+}
+
+.phone-input{
+
+  width:100%;
+  height:59px;
+
+  border-radius:16px;
+
+  border:1px solid var(--line);
+
+  background:white;
+
+  color:var(--text);
+
+  font-size:22px;
+
+  text-align:center;
+
+  outline:none;
+
+  box-shadow:
+    0 2px 8px rgba(0,0,0,.04);
+}
+
+.phone-input:focus{
+
+  border-color:var(--blue);
+
+  box-shadow:
+    0 0 0 3px rgba(0,122,255,.12);
+}
+
+.main-btn{
+
+  width:100%;
+  height:57px;
+
+  margin-top:14px;
+
+  border-radius:16px;
+
+  background:var(--blue);
+
+  color:white;
+
+  font-weight:650;
+
+  font-size:17px;
+
+  box-shadow:
+    0 7px 18px rgba(0,122,255,.2);
+}
+
+.main-btn:active{
+  transform:scale(.98);
+}
+
+.error{
+
+  min-height:22px;
+
+  margin-top:13px;
+
+  text-align:center;
+
+  color:var(--red);
+
+  font-size:14px;
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.main{
+
+  height:100%;
+
+  display:none;
+
+  flex-direction:column;
+}
+
+.main.show{
+  display:flex;
+}
+
+.connection{
+
+  position:absolute;
+
+  top:8px;
+  left:50%;
+
+  transform:translateX(-50%);
+
+  font-size:10px;
+
+  color:#999;
+
+  white-space:nowrap;
+}
+
+.topbar{
+
+  height:88px;
+
+  flex-shrink:0;
+
+  display:flex;
+
+  align-items:flex-end;
+
+  justify-content:space-between;
+
+  padding:
+    0 20px
+    15px;
+
+  background:rgba(242,242,247,.94);
+
+  border-bottom:
+    1px solid var(--line);
+}
+
+.top-title{
+
+  font-size:32px;
+
+  font-weight:750;
+}
+
+.my-number{
+
+  color:var(--sub);
+
+  font-size:12px;
+
+  margin-bottom:3px;
+}
+
+.content{
+
+  flex:1;
+
+  min-height:0;
+
+  position:relative;
+}
+
+.page{
+
+  display:none;
+
+  width:100%;
+  height:100%;
+
+  overflow:auto;
+}
+
+.page.active{
+  display:block;
+}
+
+
+/* =====================================================
+   DIAL
+===================================================== */
+
+.dial-display{
+
+  height:112px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  padding:20px;
+
+  font-size:34px;
+
+  font-weight:350;
+
+  letter-spacing:.5px;
+
+  white-space:nowrap;
+
+  overflow:hidden;
+
+  color:#111;
+}
+
+.keypad{
+
+  padding:
+    5px 25px 20px;
+
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,1fr);
+
+  gap:14px;
+}
+
+.key{
+
+  width:100%;
+  max-width:82px;
+
+  aspect-ratio:1;
+
+  justify-self:center;
+
+  border-radius:50%;
+
+  background:var(--key);
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  justify-content:center;
+
+  font-size:29px;
+
+  color:#111;
+
+  transition:
+    transform .08s,
+    background .08s;
+}
+
+.key small{
+
+  font-size:9px;
+
+  letter-spacing:2px;
+
+  margin-top:2px;
+
+  color:#666;
+}
+
+.key:active{
+
+  transform:scale(.92);
+
+  background:var(--key-active);
+}
+
+.empty{
+  background:transparent;
+}
+
+.call-key{
+
+  background:var(--green);
+
+  color:white;
+
+  font-size:30px;
+
+  box-shadow:
+    0 5px 15px rgba(52,199,89,.22);
+}
+
+.back-key{
+  font-size:23px;
+}
+
+
+/* =====================================================
+   NAV
+===================================================== */
+
+.nav{
+
+  height:78px;
+
+  flex-shrink:0;
+
+  display:flex;
+
+  background:
+    rgba(249,249,249,.97);
+
+  border-top:
+    1px solid var(--line);
+}
+
+.nav-btn{
+
+  flex:1;
+
+  background:transparent;
+
+  color:#8b8b91;
+
+  font-size:11px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  justify-content:center;
+
+  gap:4px;
+}
+
+.nav-btn span{
+  font-size:23px;
+}
+
+.nav-btn.active{
+  color:var(--blue);
+}
+
+
+/* =====================================================
+   RECENT
+===================================================== */
+
+.recent-empty{
+
+  height:100%;
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  justify-content:center;
+
+  color:#999;
+}
+
+.recent-icon{
+
+  font-size:50px;
+
+  margin-bottom:10px;
+}
+
+
+/* =====================================================
+   CONTACTS
+===================================================== */
+
+.contacts-empty{
+
+  padding:60px 25px;
+
+  text-align:center;
+
+  color:#999;
+}
+
+
+/* =====================================================
+   INCOMING
+===================================================== */
+
+.incoming{
+
+  position:absolute;
+
+  inset:0;
+
+  z-index:100;
+
+  background:
+    linear-gradient(
+      #f5f5f7,
+      #ededf2
+    );
+
+  display:none;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  padding-top:105px;
+}
+
+.incoming.show{
+  display:flex;
+}
+
+.incoming-avatar{
+
+  width:116px;
+  height:116px;
+
+  border-radius:50%;
+
+  background:#d9d9de;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  font-size:49px;
+
+  margin-bottom:26px;
+}
+
+.incoming-title{
+
+  font-size:28px;
+
+  font-weight:650;
+}
+
+.incoming-number{
+
+  margin-top:8px;
+
+  color:#777;
+}
+
+.incoming-label{
+
+  margin-top:35px;
+
+  color:#777;
+}
+
+.incoming-buttons{
+
+  position:absolute;
+
+  left:0;
+  bottom:70px;
+
+  width:100%;
+
+  display:flex;
+
+  justify-content:center;
+
+  gap:90px;
+}
+
+.round-btn{
+
+  width:76px;
+  height:76px;
+
+  border-radius:50%;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  color:white;
+
+  font-size:30px;
+}
+
+.reject{
+  background:var(--red);
+}
+
+.accept{
+  background:var(--green);
+}
+
+
+/* =====================================================
+   CALL SCREEN
+===================================================== */
+
+.call-screen{
+
+  position:absolute;
+
+  inset:0;
+
+  z-index:90;
+
+  background:
+    linear-gradient(
+      #f5f5f7,
+      #ededf2
+    );
+
+  display:none;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  padding-top:95px;
+}
+
+.call-screen.show{
+  display:flex;
+}
+
+.call-avatar{
+
+  width:116px;
+  height:116px;
+
+  border-radius:50%;
+
+  background:#d9d9de;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  font-size:49px;
+
+  margin-bottom:24px;
+}
+
+.call-name{
+
+  font-size:29px;
+
+  font-weight:650;
+}
+
+.call-number{
+
+  margin-top:7px;
+
+  color:#777;
+}
+
+.call-state{
+
+  margin-top:16px;
+
+  color:#777;
+}
+
+.call-timer{
+
+  margin-top:8px;
+
+  color:#777;
+
+  font-variant-numeric:
+    tabular-nums;
+}
+
+.call-controls{
+
+  position:absolute;
+
+  bottom:70px;
+
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,70px);
+
+  gap:24px;
+}
+
+.control{
+
+  width:70px;
+  height:70px;
+
+  border-radius:50%;
+
+  background:#dddde2;
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  font-size:25px;
+}
+
+.control small{
+
+  font-size:10px;
+
+  margin-top:4px;
+}
+
+.control.active{
+
+  background:#111;
+
+  color:white;
+}
+
+.control.hangup{
+
+  background:var(--red);
+
+  color:white;
+}
+
+
+/* =====================================================
+   TOAST
+===================================================== */
+
+.toast{
+
+  position:absolute;
+
+  left:50%;
+
+  bottom:95px;
+
+  transform:
+    translateX(-50%)
+    translateY(20px);
+
+  padding:
+    12px 18px;
+
+  border-radius:15px;
+
+  background:
+    rgba(30,30,30,.9);
+
+  color:white;
+
+  font-size:13px;
+
+  opacity:0;
+
+  pointer-events:none;
+
+  transition:.25s;
+
+  z-index:300;
+
+  white-space:nowrap;
+}
+
+.toast.show{
+
+  opacity:1;
+
+  transform:
+    translateX(-50%)
+    translateY(0);
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div class="app">
+
+
+<!-- ====================================================
+     SETUP
+===================================================== -->
+
+<section
+id="setup"
+class="setup">
+
+  <div class="setup-icon">
+    ☎
+  </div>
+
+  <h1>전화</h1>
+
+  <p>
+    이 기기에서 사용할<br>
+    가상 전화번호를 설정하세요.
+  </p>
+
+  <input
+    id="numberInput"
+    class="phone-input"
+    inputmode="numeric"
+    autocomplete="off"
+    maxlength="13"
+    placeholder="010-0000-0000">
+
+  <button
+    id="startButton"
+    class="main-btn">
+    전화 시작
+  </button>
+
+  <div
+    id="setupError"
+    class="error">
+  </div>
+
+</section>
+
+
+<!-- ====================================================
+     MAIN
+===================================================== -->
+
+<section
+id="main"
+class="main">
+
+  <div
+    id="connection"
+    class="connection">
+    연결 준비 중
+  </div>
+
+
+  <header class="topbar">
+
+    <div
+      id="pageTitle"
+      class="top-title">
+      전화
+    </div>
+
+    <div
+      id="displayMyNumber"
+      class="my-number">
+    </div>
+
+  </header>
+
+
+  <div class="content">
+
+
+    <!-- 전화 페이지 -->
+
+    <div
+      id="dialPage"
+      class="page active">
+
+      <div
+        id="dialDisplay"
+        class="dial-display">
+      </div>
+
+
+      <div class="keypad">
+
+
+        <button
+          class="key"
+          data-key="1">
+          1
+        </button>
+
+
+        <button
+          class="key"
+          data-key="2">
+          2
+          <small>ABC</small>
+        </button>
+
+
+        <button
+          class="key"
+          data-key="3">
+          3
+          <small>DEF</small>
+        </button>
+
+
+        <button
+          class="key"
+          data-key="4">
+          4
+          <small>GHI</small>
+        </button>
+
+
+        <button
+          class="key"
+          data-key="5">
+          5
+          <small>JKL</small>
+        </button>
+
+
+        <button
+          class="key"
+          data-key="6">
+          6
+          <small>MNO</small>
+        </button>
+
+
+        <button
+          class="key"
+          data-key="7">
+          7
+          <small>PQRS</small>
+        </button>
+
+
+        <button
+          class="key"
+          data-key="8">
+          8
+          <small>TUV</small>
+        </button>
+
+
+        <button
+          class="key"
+          data-key="9">
+          9
+          <small>WXYZ</small>
+        </button>
+
+
+        <button
+          class="key"
+          data-key="*">
+          *
+        </button>
+
+
+        <button
+          class="key"
+          data-key="0">
+          0
+          <small>+</small>
+        </button>
+
+
+        <button
+          id="backspace"
+          class="key back-key">
+          ⌫
+        </button>
+
+
+        <div class="empty"></div>
+
+
+        <button
+          id="callButton"
+          class="key call-key">
+          ☎
+        </button>
+
+
+        <div class="empty"></div>
+
+
+      </div>
+
+    </div>
+
+
+    <!-- 최근 통화 -->
+
+    <div
+      id="recentPage"
+      class="page">
+
+      <div class="recent-empty">
+
+        <div class="recent-icon">
+          ◷
+        </div>
+
+        <div>
+          최근 통화가 없습니다
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- 연락처 -->
+
+    <div
+      id="contactsPage"
+      class="page">
+
+      <div class="contacts-empty">
+        연락처가 없습니다.
+      </div>
+
+    </div>
+
+
+  </div>
+
+
+  <!-- 하단 탭 -->
+
+  <nav class="nav">
+
+    <button
+      class="nav-btn active"
+      data-page="dial">
+
+      <span>⌨</span>
+
+      전화
+
+    </button>
+
+
+    <button
+      class="nav-btn"
+      data-page="recent">
+
+      <span>◷</span>
+
+      최근 통화
+
+    </button>
+
+
+    <button
+      class="nav-btn"
+      data-page="contacts">
+
+      <span>👤</span>
+
+      연락처
+
+    </button>
+
+  </nav>
+
+</section>
+
+
+<!-- ====================================================
+     INCOMING
+===================================================== -->
+
+<section
+id="incoming"
+class="incoming">
+
+  <div class="incoming-avatar">
+    👤
+  </div>
+
+  <div class="incoming-title">
+    수신 전화
+  </div>
+
+  <div
+    id="incomingNumber"
+    class="incoming-number">
+  </div>
+
+  <div class="incoming-label">
+    전화가 왔습니다
+  </div>
+
+
+  <div class="incoming-buttons">
+
+    <button
+      id="rejectButton"
+      class="round-btn reject">
+      ✕
+    </button>
+
+
+    <button
+      id="acceptButton"
+      class="round-btn accept">
+      ☎
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- ====================================================
+     CALL
+===================================================== -->
+
+<section
+id="callScreen"
+class="call-screen">
+
+  <div class="call-avatar">
+    👤
+  </div>
+
+  <div
+    id="callName"
+    class="call-name">
+  </div>
+
+  <div
+    id="callNumber"
+    class="call-number">
+  </div>
+
+  <div
+    id="callState"
+    class="call-state">
+    연결 중...
+  </div>
+
+  <div
+    id="callTimer"
+    class="call-timer">
+  </div>
+
+
+  <div class="call-controls">
+
+
+    <button
+      id="muteButton"
+      class="control">
+
+      🎙
+
+      <small>
+        음소거
+      </small>
+
+    </button>
+
+
+    <button
+      id="speakerButton"
+      class="control">
+
+      🔊
+
+      <small>
+        스피커
+      </small>
+
+    </button>
+
+
+    <button
+      id="hangupButton"
+      class="control hangup">
+
+      ☎
+
+      <small>
+        종료
+      </small>
+
+    </button>
+
+
+  </div>
+
+</section>
+
+
+<div
+id="toast"
+class="toast">
+</div>
+
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   SUPABASE
+========================================================= */
+
+const SUPABASE_URL =
+"https://ajrysthcqilncygvemum.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_0PWrkROtp3VVjV0KP0Kcow_Dnsm5vhF";
+
+const client =
+window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let myNumber = "";
+
+let channel = null;
+
+let currentCall = null;
+
+let incomingCall = null;
+
+let peer = null;
+
+let localStream = null;
+
+let remoteAudio = null;
+
+let pendingIce = [];
+
+let muted = false;
+
+let speaker = false;
+
+let timerInterval = null;
+
+let callStartedAt = null;
+
+
+/* =========================================================
+   ELEMENTS
+========================================================= */
+
+const setup =
+document.getElementById("setup");
+
+const main =
+document.getElementById("main");
+
+const numberInput =
+document.getElementById("numberInput");
+
+const setupError =
+document.getElementById("setupError");
+
+const connection =
+document.getElementById("connection");
+
+const dialDisplay =
+document.getElementById("dialDisplay");
+
+const incoming =
+document.getElementById("incoming");
+
+const callScreen =
+document.getElementById("callScreen");
+
+const toast =
+document.getElementById("toast");
+
+
+/* =========================================================
+   AUDIO EFFECTS
+========================================================= */
+
+let audioContext = null;
+
+
+/*
+  브라우저에서 직접 효과음을 만든다.
+  외부 mp3 파일이 필요하지 않음.
+*/
+
+function getAudioContext(){
+
+  if(!audioContext){
+
+    audioContext =
+      new (
+        window.AudioContext ||
+        window.webkitAudioContext
+      )();
+
+  }
+
+  return audioContext;
+
+}
+
+
+function tone(
+  frequency,
+  duration,
+  type="sine",
+  volume=.08
+){
+
+  try{
+
+    const ctx =
+      getAudioContext();
+
+    if(
+      ctx.state ===
+      "suspended"
+    ){
+
+      ctx.resume();
+
+    }
+
+
+    const oscillator =
+      ctx.createOscillator();
+
+    const gain =
+      ctx.createGain();
+
+
+    oscillator.type =
+      type;
+
+    oscillator.frequency.value =
+      frequency;
+
+
+    gain.gain.setValueAtTime(
+      volume,
+      ctx.currentTime
+    );
+
+
+    gain.gain.exponentialRampToValueAtTime(
+      .001,
+      ctx.currentTime +
+      duration
+    );
+
+
+    oscillator.connect(gain);
+
+    gain.connect(
+      ctx.destination
+    );
+
+
+    oscillator.start();
+
+    oscillator.stop(
+      ctx.currentTime +
+      duration
+    );
+
+  }catch(e){
+
+    console.warn(
+      "Audio effect unavailable",
+      e
+    );
+
+  }
+
+}
+
+
+/* 번호 키 */
+
+function keypadSound(){
+
+  tone(
+    620,
+    .045,
+    "sine",
+    .045
+  );
+
+}
+
+
+/* 전화 거는 소리 */
+
+function outgoingSound(){
+
+  tone(
+    440,
+    .12,
+    "sine",
+    .06
+  );
+
+  setTimeout(
+    () =>
+      tone(
+        480,
+        .12,
+        "sine",
+        .06
+      ),
+    150
+  );
+
+}
+
+
+/* 연결 성공 */
+
+function connectedSound(){
+
+  tone(
+    660,
+    .09,
+    "sine",
+    .07
+  );
+
+  setTimeout(
+    () =>
+      tone(
+        880,
+        .15,
+        "sine",
+        .07
+      ),
+    110
+  );
+
+}
+
+
+/* 통화 종료 */
+
+function hangupSound(){
+
+  tone(
+    520,
+    .08,
+    "sine",
+    .06
+  );
+
+  setTimeout(
+    () =>
+      tone(
+        350,
+        .16,
+        "sine",
+        .05
+      ),
+    90
+  );
+
+}
+
+
+/* =========================================================
+   TTS
+========================================================= */
+
+function speak(text){
+
+  if(
+    !("speechSynthesis" in window)
+  ){
+
+    return;
+
+  }
+
+
+  window.speechSynthesis.cancel();
+
+
+  const utterance =
+    new SpeechSynthesisUtterance(
+      text
+    );
+
+
+  utterance.lang =
+    "ko-KR";
+
+  utterance.rate =
+    .9;
+
+  utterance.pitch =
+    1;
+
+
+  window.speechSynthesis.speak(
+    utterance
+  );
+
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+let toastTimer = null;
+
+function showToast(message){
+
+  toast.textContent =
+    message;
+
+  toast.classList.add(
+    "show"
+  );
+
+
+  clearTimeout(
+    toastTimer
+  );
+
+
+  toastTimer =
+    setTimeout(
+      () => {
+
+        toast.classList.remove(
+          "show"
+        );
+
+      },
+      2200
+    );
+
+}
+
+
+/* =========================================================
+   NUMBER NORMALIZE
+========================================================= */
+
+function normalizeNumber(value){
+
+  return String(value || "")
+    .replace(/\D/g,"");
+
+}
+
+
+/* =========================================================
+   NUMBER FORMAT
+========================================================= */
+
+function formatPhone(value){
+
+  const digits =
+    normalizeNumber(value)
+      .slice(0,11);
+
+
+  if(
+    digits.length <= 3
+  ){
+
+    return digits;
+
+  }
+
+
+  if(
+    digits.length <= 7
+  ){
+
+    return (
+      digits.slice(0,3)
+      +
+      "-"
+      +
+      digits.slice(3)
+    );
+
+  }
+
+
+  return (
+    digits.slice(0,3)
+    +
+    "-"
+    +
+    digits.slice(3,7)
+    +
+    "-"
+    +
+    digits.slice(7,11)
+  );
+
+}
+
+
+/* =========================================================
+   SETUP INPUT
+========================================================= */
+
+numberInput.addEventListener(
+  "input",
+  () => {
+
+    numberInput.value =
+      formatPhone(
+        numberInput.value
+      );
+
+
+    setupError.textContent =
+      "";
+
+  }
+);
+
+
+/* =========================================================
+   START PHONE
+========================================================= */
+
+document
+  .getElementById("startButton")
+  .addEventListener(
+    "click",
+    startPhone
+  );
+
+
+numberInput.addEventListener(
+  "keydown",
+  event => {
+
+    if(
+      event.key ===
+      "Enter"
+    ){
+
+      startPhone();
+
+    }
+
+  }
+);
+
+
+async function startPhone(){
+
+  const formatted =
+    formatPhone(
+      numberInput.value
+    );
+
+  const number =
+    normalizeNumber(
+      formatted
+    );
+
+
+  if(
+    number.length !== 11
+  ){
+
+    setupError.textContent =
+      "전화번호를 11자리로 입력해주세요.";
+
+    return;
+
+  }
+
+
+  /*
+    같은 번호가 이미 온라인인지 검사.
+  */
+
+  try{
+
+    if(
+      await isNumberOnline(number)
+    ){
+
+      setupError.textContent =
+        "이미 사용 중인 전화번호입니다.";
+
+      tone(
+        180,
+        .15,
+        "square",
+        .04
+      );
+
+      return;
+
+    }
+
+  }catch(error){
+
+    console.warn(
+      "Duplicate check failed",
+      error
+    );
+
+  }
+
+
+  myNumber =
+    number;
+
+
+  localStorage.setItem(
+    "fake_phone_number",
+    myNumber
+  );
+
+
+  document.getElementById(
+    "displayMyNumber"
+  ).textContent =
+    formatPhone(myNumber);
+
+
+  setup.style.display =
+    "none";
+
+  main.classList.add(
+    "show"
+  );
+
+
+  connection.textContent =
+    "서버 연결 중...";
+
+
+  try{
+
+    await connectRealtime();
+
+  }catch(error){
+
+    console.error(error);
+
+    connection.textContent =
+      "오프라인";
+
+    showToast(
+      "서버 연결에 실패했습니다."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   RESTORE
+========================================================= */
+
+window.addEventListener(
+  "load",
+  () => {
+
+    const saved =
+      localStorage.getItem(
+        "fake_phone_number"
+      );
+
+
+    if(saved){
+
+      numberInput.value =
+        formatPhone(saved);
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   REALTIME
+========================================================= */
+
+async function connectRealtime(){
+
+  if(channel)
+    return;
+
+
+  channel =
+    client.channel(
+      "phone-network",
+      {
+
+        config:{
+
+          broadcast:{
+            self:false
+          },
+
+          presence:{
+            key:
+              normalizeNumber(
+                myNumber
+              )
+          }
+
+        }
+
+      }
+    );
+
+
+  channel.on(
+    "broadcast",
+    {
+      event:"phone"
+    },
+    ({payload}) => {
+
+      handlePhoneEvent(
+        payload
+      );
+
+    }
+  );
+
+
+  channel.on(
+    "presence",
+    {
+      event:"sync"
+    },
+    () => {
+
+      connection.textContent =
+        "온라인";
+
+    }
+  );
+
+
+  await new Promise(
+    (resolve,reject) => {
+
+      const timeout =
+        setTimeout(
+          () => {
+
+            reject(
+              new Error(
+                "Realtime timeout"
+              )
+            );
+
+          },
+          8000
+        );
+
+
+      channel.subscribe(
+        async status => {
+
+          if(
+            status ===
+            "SUBSCRIBED"
+          ){
+
+            clearTimeout(
+              timeout
+            );
+
+
+            await channel.track({
+
+              number:
+                normalizeNumber(
+                  myNumber
+                ),
+
+              online:true,
+
+              joinedAt:
+                Date.now()
+
+            });
+
+
+            connection.textContent =
+              "온라인";
+
+
+            resolve();
+
+          }
+
+
+          if(
+            status ===
+            "CHANNEL_ERROR"
+          ){
+
+            clearTimeout(
+              timeout
+            );
+
+            reject(
+              new Error(
+                "Realtime error"
+              )
+            );
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   CHECK ONLINE NUMBER
+========================================================= */
+
+async function isNumberOnline(
+  number
+){
+
+  const normalized =
+    normalizeNumber(
+      number
+    );
+
+
+  /*
+    아직 채널에 연결되어 있다면
+    Presence 목록에서 확인.
+  */
+
+  if(channel){
+
+    const state =
+      channel.presenceState();
+
+
+    return Object.keys(state)
+      .some(
+        key =>
+          normalizeNumber(key) ===
+          normalized
+      );
+
+  }
+
+
+  /*
+    새 임시 채널에서 확인.
+  */
+
+  const checker =
+    client.channel(
+      "phone-network",
+      {
+        config:{
+          presence:{
+            key:
+              "check-" +
+              crypto.randomUUID()
+          }
+        }
+      }
+    );
+
+
+  try{
+
+    await new Promise(
+      (resolve,reject) => {
+
+        const timeout =
+          setTimeout(
+            () =>
+              reject(
+                new Error(
+                  "presence timeout"
+                )
+              ),
+            5000
+          );
+
+
+        checker.subscribe(
+          status => {
+
+            if(
+              status ===
+              "SUBSCRIBED"
+            ){
+
+              clearTimeout(
+                timeout
+              );
+
+              resolve();
+
+            }
+
+
+            if(
+              status ===
+              "CHANNEL_ERROR"
+            ){
+
+              clearTimeout(
+                timeout
+              );
+
+              reject(
+                new Error(
+                  "presence error"
+                )
+              );
+
+            }
+
+          }
+        );
+
+      }
+    );
+
+
+    /*
+      sync 이벤트가 들어온 후
+      presenceState를 확인.
+    */
+
+    await new Promise(
+      resolve =>
+        setTimeout(
+          resolve,
+          500
+        )
+    );
+
+
+    const state =
+      checker.presenceState();
+
+
+    return Object.keys(state)
+      .some(
+        key =>
+          normalizeNumber(key) ===
+          normalized
+      );
+
+
+  }finally{
+
+    try{
+
+      await checker.unsubscribe();
+
+    }catch(e){}
+
+  }
+
+}
+
+
+/* =========================================================
+   SEND
+========================================================= */
+
+async function send(data){
+
+  if(!channel){
+
+    showToast(
+      "서버에 연결되지 않았습니다."
+    );
+
+    return;
+
+  }
+
+
+  await channel.send({
+
+    type:
+      "broadcast",
+
+    event:
+      "phone",
+
+    payload:
+      data
+
+  });
+
+}
+
+
+/* =========================================================
+   PHONE EVENTS
+========================================================= */
+
+function handlePhoneEvent(data){
+
+  if(!data)
+    return;
+
+
+  /*
+    수신 전화
+  */
+
+  if(
+    data.type === "call" &&
+    normalizeNumber(data.to) ===
+      normalizeNumber(myNumber)
+  ){
+
+    incomingCall =
+      data;
+
+
+    document.getElementById(
+      "incomingNumber"
+    ).textContent =
+      formatPhone(
+        data.from
+      );
+
+
+    incoming.classList.add(
+      "show"
+    );
+
+
+    /*
+      수신 효과음
+    */
+
+    tone(
+      880,
+      .16,
+      "sine",
+      .08
+    );
+
+
+    setTimeout(
+      () =>
+        tone(
+          660,
+          .16,
+          "sine",
+          .07
+        ),
+      200
+    );
+
+
+    return;
+
+  }
+
+
+  /*
+    받음
+  */
+
+  if(
+    data.type === "accepted" &&
+    currentCall &&
+    data.callId ===
+      currentCall.callId
+  ){
+
+    connectedSound();
+
+    startCallerPeer();
+
+    return;
+
+  }
+
+
+  /*
+    거절
+  */
+
+  if(
+    data.type === "rejected" &&
+    currentCall &&
+    data.callId ===
+      currentCall.callId
+  ){
+
+    document.getElementById(
+      "callState"
+    ).textContent =
+      "통화가 거절되었습니다.";
+
+
+    speak(
+      "통화가 거절되었습니다."
+    );
+
+
+    setTimeout(
+      endCall,
+      1400
+    );
+
+
+    return;
+
+  }
+
+
+  /*
+    WebRTC offer
+  */
+
+  if(
+    data.type === "offer" &&
+    normalizeNumber(data.to) ===
+      normalizeNumber(myNumber)
+  ){
+
+    receiveOffer(data);
+
+    return;
+
+  }
+
+
+  /*
+    WebRTC answer
+  */
+
+  if(
+    data.type === "answer" &&
+    normalizeNumber(data.to) ===
+      normalizeNumber(myNumber)
+  ){
+
+    receiveAnswer(data);
+
+    return;
+
+  }
+
+
+  /*
+    ICE
+  */
+
+  if(
+    data.type === "ice" &&
+    normalizeNumber(data.to) ===
+      normalizeNumber(myNumber)
+  ){
+
+    receiveIce(data);
+
+    return;
+
+  }
+
+
+  /*
+    상대방 종료
+  */
+
+  if(
+    data.type === "hangup" &&
+    currentCall &&
+    data.callId ===
+      currentCall.callId
+  ){
+
+    document.getElementById(
+      "callState"
+    ).textContent =
+      "통화 종료";
+
+
+    hangupSound();
+
+
+    setTimeout(
+      endCall,
+      600
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   KEYPAD
+========================================================= */
+
+document
+  .querySelectorAll(
+    ".key[data-key]"
+  )
+  .forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          keypadSound();
+
+
+          const digits =
+            dialDisplay.textContent
+              .replace(/\D/g,"");
+
+
+          if(
+            digits.length >= 11
+          )
+            return;
+
+
+          const next =
+            digits +
+            button.dataset.key;
+
+
+          dialDisplay.textContent =
+            formatPhone(next);
+
+        }
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   BACKSPACE
+========================================================= */
+
+document
+  .getElementById(
+    "backspace"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      keypadSound();
+
+
+      let value =
+        dialDisplay.textContent
+          .replace(/\D/g,"");
+
+
+      value =
+        value.slice(
+          0,
+          -1
+        );
+
+
+      dialDisplay.textContent =
+        formatPhone(value);
+
+    }
+  );
+
+
+/* =========================================================
+   CALL
+========================================================= */
+
+document
+  .getElementById(
+    "callButton"
+  )
+  .addEventListener(
+    "click",
+    makeCall
+  );
+
+
+async function makeCall(){
+
+  const target =
+    normalizeNumber(
+      dialDisplay.textContent
+    );
+
+
+  if(
+    target.length !== 11
+  ){
+
+    showToast(
+      "전화번호 11자리를 입력해주세요."
+    );
+
+    tone(
+      180,
+      .12,
+      "square",
+      .04
+    );
+
+    return;
+
+  }
+
+
+  if(
+    target ===
+    normalizeNumber(myNumber)
+  ){
+
+    showToast(
+      "자기 자신에게 전화할 수 없습니다."
+    );
+
+    speak(
+      "자기 자신에게 전화할 수 없습니다."
+    );
+
+    return;
+
+  }
+
+
+  /*
+    실제 온라인 번호인지 확인.
+  */
+
+  let exists =
+    false;
+
+
+  try{
+
+    exists =
+      await isNumberOnline(
+        target
+      );
+
+  }catch(error){
+
+    console.warn(
+      "Online check error",
+      error
+    );
+
+  }
+
+
+  if(!exists){
+
+    /*
+      없는 번호 처리
+    */
+
+    tone(
+      280,
+      .12,
+      "square",
+      .05
+    );
+
+
+    setTimeout(
+      () =>
+        tone(
+          180,
+          .2,
+          "square",
+          .05
+        ),
+      150
+    );
+
+
+    speak(
+      "없는 전화번호입니다."
+    );
+
+
+    showToast(
+      "없는 전화번호입니다."
+    );
+
+
+    return;
+
+  }
+
+
+  currentCall = {
+
+    callId:
+      crypto.randomUUID(),
+
+    from:
+      myNumber,
+
+    to:
+      target,
+
+    direction:
+      "outgoing"
+
+  };
+
+
+  openCallScreen(
+    target,
+    "전화 거는 중..."
+  );
+
+
+  outgoingSound();
+
+
+  await send({
+
+    type:
+      "call",
+
+    callId:
+      currentCall.callId,
+
+    from:
+      normalizeNumber(
+        myNumber
+      ),
+
+    to:
+      target
+
+  });
+
+}
+
+
+/* =========================================================
+   ACCEPT
+========================================================= */
+
+document
+  .getElementById(
+    "acceptButton"
+  )
+  .addEventListener(
+    "click",
+    acceptCall
+  );
+
+
+async function acceptCall(){
+
+  if(!incomingCall)
+    return;
+
+
+  currentCall = {
+
+    callId:
+      incomingCall.callId,
+
+    from:
+      incomingCall.from,
+
+    to:
+      myNumber,
+
+    direction:
+      "incoming"
+
+  };
+
+
+  incoming.classList.remove(
+    "show"
+  );
+
+
+  openCallScreen(
+    incomingCall.from,
+    "연결 중..."
+  );
+
+
+  connectedSound();
+
+
+  await send({
+
+    type:
+      "accepted",
+
+    callId:
+      currentCall.callId,
+
+    from:
+      myNumber,
+
+    to:
+      incomingCall.from
+
+  });
+
+
+  await startReceiverPeer();
+
+}
+
+
+/* =========================================================
+   REJECT
+========================================================= */
+
+document
+  .getElementById(
+    "rejectButton"
+  )
+  .addEventListener(
+    "click",
+    rejectCall
+  );
+
+
+async function rejectCall(){
+
+  if(!incomingCall)
+    return;
+
+
+  await send({
+
+    type:
+      "rejected",
+
+    callId:
+      incomingCall.callId,
+
+    from:
+      myNumber,
+
+    to:
+      incomingCall.from
+
+  });
+
+
+  incoming.classList.remove(
+    "show"
+  );
+
+
+  incomingCall = null;
+
+
+  hangupSound();
+
+}
+
+
+/* =========================================================
+   CALL SCREEN
+========================================================= */
+
+function openCallScreen(
+  number,
+  state
+){
+
+  document.getElementById(
+    "callName"
+  ).textContent =
+    formatPhone(number);
+
+
+  document.getElementById(
+    "callNumber"
+  ).textContent =
+    formatPhone(number);
+
+
+  document.getElementById(
+    "callState"
+  ).textContent =
+    state;
+
+
+  document.getElementById(
+    "callTimer"
+  ).textContent =
+    "";
+
+
+  callScreen.classList.add(
+    "show"
+  );
+
+}
+
+
+/* =========================================================
+   TIMER
+========================================================= */
+
+function startTimer(){
+
+  clearInterval(
+    timerInterval
+  );
+
+
+  callStartedAt =
+    Date.now();
+
+
+  timerInterval =
+    setInterval(
+      () => {
+
+        const seconds =
+          Math.floor(
+            (
+              Date.now() -
+              callStartedAt
+            ) / 1000
+          );
+
+
+        const min =
+          String(
+            Math.floor(
+              seconds / 60
+            )
+          ).padStart(
+            2,
+            "0"
+          );
+
+
+        const sec =
+          String(
+            seconds % 60
+          ).padStart(
+            2,
+            "0"
+          );
+
+
+        document.getElementById(
+          "callTimer"
+        ).textContent =
+          `${min}:${sec}`;
+
+      },
+      1000
+    );
+
+}
+
+
+/* =========================================================
+   WEBRTC
+========================================================= */
+
+function createPeer(
+  remoteNumber
+){
+
+  const pc =
+    new RTCPeerConnection({
+
+      iceServers:[
+
+        {
+          urls:
+            "stun:stun.l.google.com:19302"
+        },
+
+        {
+          urls:
+            "stun:stun1.l.google.com:19302"
+        }
+
+      ]
+
+    });
+
+
+  pc.onicecandidate =
+    async event => {
+
+      if(
+        !event.candidate
+      )
+        return;
+
+
+      await send({
+
+        type:
+          "ice",
+
+        callId:
+          currentCall.callId,
+
+        from:
+          myNumber,
+
+        to:
+          remoteNumber,
+
+        candidate:
+          event.candidate
+
+      });
+
+    };
+
+
+  pc.ontrack =
+    event => {
+
+      if(!remoteAudio){
+
+        remoteAudio =
+          document.createElement(
+            "audio"
+          );
+
+
+        remoteAudio.autoplay =
+          true;
+
+
+        remoteAudio.playsInline =
+          true;
+
+
+        document.body.appendChild(
+          remoteAudio
+        );
+
+      }
+
+
+      remoteAudio.srcObject =
+        event.streams[0];
+
+    };
+
+
+  pc.onconnectionstatechange =
+    () => {
+
+      console.log(
+        "WebRTC:",
+        pc.connectionState
+      );
+
+
+      if(
+        pc.connectionState ===
+        "connected"
+      ){
+
+        document.getElementById(
+          "callState"
+        ).textContent =
+          "통화 중";
+
+
+        startTimer();
+
+
+        connectedSound();
+
+      }
+
+
+      if(
+        pc.connectionState ===
+          "failed"
+        ||
+        pc.connectionState ===
+          "disconnected"
+      ){
+
+        document.getElementById(
+          "callState"
+        ).textContent =
+          "연결이 끊어졌습니다.";
+
+      }
+
+    };
+
+
+  return pc;
+
+}
+
+
+/* =========================================================
+   MICROPHONE
+========================================================= */
+
+async function getMicrophone(){
+
+  if(localStream)
+    return;
+
+
+  localStream =
+    await navigator.mediaDevices
+      .getUserMedia({
+
+        audio:{
+
+          echoCancellation:
+            true,
+
+          noiseSuppression:
+            true,
+
+          autoGainControl:
+            true
+
+        },
+
+        video:
+          false
+
+      });
+
+}
+
+
+/* =========================================================
+   CALLER PEER
+========================================================= */
+
+async function startCallerPeer(){
+
+  try{
+
+    await getMicrophone();
+
+
+    peer =
+      createPeer(
+        currentCall.to
+      );
+
+
+    localStream
+      .getTracks()
+      .forEach(
+        track => {
+
+          peer.addTrack(
+            track,
+            localStream
+          );
+
+        }
+      );
+
+
+    const offer =
+      await peer.createOffer();
+
+
+    await peer.setLocalDescription(
+      offer
+    );
+
+
+    await send({
+
+      type:
+        "offer",
+
+      callId:
+        currentCall.callId,
+
+      from:
+        myNumber,
+
+      to:
+        currentCall.to,
+
+      offer:
+        offer
+
+    });
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+
+    showToast(
+      "마이크를 사용할 수 없습니다."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   RECEIVER PEER
+========================================================= */
+
+async function startReceiverPeer(){
+
+  try{
+
+    await getMicrophone();
+
+
+    peer =
+      createPeer(
+        currentCall.from
+      );
+
+
+    localStream
+      .getTracks()
+      .forEach(
+        track => {
+
+          peer.addTrack(
+            track,
+            localStream
+          );
+
+        }
+      );
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+
+    showToast(
+      "마이크 권한이 필요합니다."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   OFFER
+========================================================= */
+
+async function receiveOffer(
+  data
+){
+
+  if(!currentCall)
+    return;
+
+
+  try{
+
+    if(!peer){
+
+      await startReceiverPeer();
+
+    }
+
+
+    await peer.setRemoteDescription(
+      new RTCSessionDescription(
+        data.offer
+      )
+    );
+
+
+    const answer =
+      await peer.createAnswer();
+
+
+    await peer.setLocalDescription(
+      answer
+    );
+
+
+    await send({
+
+      type:
+        "answer",
+
+      callId:
+        data.callId,
+
+      from:
+        myNumber,
+
+      to:
+        data.from,
+
+      answer:
+        answer
+
+    });
+
+
+    for(
+      const candidate
+      of pendingIce
+    ){
+
+      try{
+
+        await peer.addIceCandidate(
+          new RTCIceCandidate(
+            candidate
+          )
+        );
+
+      }catch(e){}
+
+    }
+
+
+    pendingIce = [];
+
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   ANSWER
+========================================================= */
+
+async function receiveAnswer(
+  data
+){
+
+  if(!peer)
+    return;
+
+
+  try{
+
+    await peer.setRemoteDescription(
+      new RTCSessionDescription(
+        data.answer
+      )
+    );
+
+
+    for(
+      const candidate
+      of pendingIce
+    ){
+
+      try{
+
+        await peer.addIceCandidate(
+          new RTCIceCandidate(
+            candidate
+          )
+        );
+
+      }catch(e){}
+
+    }
+
+
+    pendingIce = [];
+
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   ICE
+========================================================= */
+
+async function receiveIce(
+  data
+){
+
+  if(!peer){
+
+    pendingIce.push(
+      data.candidate
+    );
+
+    return;
+
+  }
+
+
+  try{
+
+    await peer.addIceCandidate(
+      new RTCIceCandidate(
+        data.candidate
+      )
+    );
+
+  }catch(error){
+
+    console.warn(
+      "ICE error",
+      error
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   MUTE
+========================================================= */
+
+document
+  .getElementById(
+    "muteButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      if(!localStream)
+        return;
+
+
+      muted =
+        !muted;
+
+
+      localStream
+        .getAudioTracks()
+        .forEach(
+          track => {
+
+            track.enabled =
+              !muted;
+
+          }
+        );
+
+
+      document
+        .getElementById(
+          "muteButton"
+        )
+        .classList.toggle(
+          "active",
+          muted
+        );
+
+    }
+  );
+
+
+/* =========================================================
+   SPEAKER
+========================================================= */
+
+document
+  .getElementById(
+    "speakerButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      speaker =
+        !speaker;
+
+
+      document
+        .getElementById(
+          "speakerButton"
+        )
+        .classList.toggle(
+          "active",
+          speaker
+        );
+
+
+      if(remoteAudio){
+
+        remoteAudio.volume =
+          speaker
+            ? 1
+            : .55;
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   HANGUP
+========================================================= */
+
+document
+  .getElementById(
+    "hangupButton"
+  )
+  .addEventListener(
+    "click",
+    hangUp
+  );
+
+
+async function hangUp(){
+
+  if(currentCall){
+
+    const target =
+      currentCall.direction ===
+      "outgoing"
+
+        ? currentCall.to
+
+        : currentCall.from;
+
+
+    await send({
+
+      type:
+        "hangup",
+
+      callId:
+        currentCall.callId,
+
+      from:
+        myNumber,
+
+      to:
+        target
+
+    });
+
+  }
+
+
+  hangupSound();
+
+
+  endCall();
+
+}
+
+
+/* =========================================================
+   END CALL
+========================================================= */
+
+function endCall(){
+
+  clearInterval(
+    timerInterval
+  );
+
+
+  timerInterval =
+    null;
+
+
+  if(peer){
+
+    peer.close();
+
+    peer =
+      null;
+
+  }
+
+
+  if(localStream){
+
+    localStream
+      .getTracks()
+      .forEach(
+        track =>
+          track.stop()
+      );
+
+
+    localStream =
+      null;
+
+  }
+
+
+  if(remoteAudio){
+
+    remoteAudio.srcObject =
+      null;
+
+
+    remoteAudio.remove();
+
+
+    remoteAudio =
+      null;
+
+  }
+
+
+  currentCall =
+    null;
+
+
+  incomingCall =
+    null;
+
+
+  pendingIce =
+    [];
+
+
+  muted =
+    false;
+
+
+  speaker =
+    false;
+
+
+  document
+    .getElementById(
+      "muteButton"
+    )
+    .classList.remove(
+      "active"
+    );
+
+
+  document
+    .getElementById(
+      "speakerButton"
+    )
+    .classList.remove(
+      "active"
+    );
+
+
+  callScreen.classList.remove(
+    "show"
+  );
+
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+document
+  .querySelectorAll(
+    ".nav-btn"
+  )
+  .forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const page =
+            button.dataset.page;
+
+
+          document
+            .querySelectorAll(
+              ".nav-btn"
+            )
+            .forEach(
+              b =>
+                b.classList.remove(
+                  "active"
+                )
+            );
+
+
+          button.classList.add(
+            "active"
+          );
+
+
+          document
+            .querySelectorAll(
+              ".page"
+            )
+            .forEach(
+              p =>
+                p.classList.remove(
+                  "active"
+                )
+            );
+
+
+          document
+            .getElementById(
+              page +
+              "Page"
+            )
+            .classList.add(
+              "active"
+            );
+
+
+          const titles = {
+
+            dial:
+              "전화",
+
+            recent:
+              "최근 통화",
+
+            contacts:
+              "연락처"
+
+          };
+
+
+          document.getElementById(
+            "pageTitle"
+          ).textContent =
+            titles[page];
+
+        }
+
+      );
+
+    }
+  );
+
+/* =========================================================
+   WebRTC 연결 상태 / 오류 진단 팝업
+   기존 코드 아래에 그대로 추가
+   ========================================================= */
+
+(function () {
+  let debugPopup = null;
+  let debugTitle = null;
+  let debugText = null;
+  let debugClose = null;
+
+  function createDebugPopup() {
+    if (debugPopup) return;
+
+    debugPopup = document.createElement("div");
+    debugPopup.id = "webrtcDebugPopup";
+
+    debugPopup.innerHTML = `
+      <div class="webrtc-debug-box">
+        <div class="webrtc-debug-title" id="webrtcDebugTitle">
+          연결 상태
+        </div>
+
+        <div class="webrtc-debug-text" id="webrtcDebugText">
+          확인 중...
+        </div>
+
+        <button id="webrtcDebugClose">
+          확인
+        </button>
+      </div>
+    `;
+
+    const style = document.createElement("style");
+
+    style.textContent = `
+      #webrtcDebugPopup {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(0,0,0,.45);
+        backdrop-filter: blur(5px);
+      }
+
+      .webrtc-debug-box {
+        width: min(360px, 90vw);
+        padding: 22px;
+        border-radius: 20px;
+        background: #fff;
+        color: #222;
+        box-shadow: 0 15px 50px rgba(0,0,0,.25);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .webrtc-debug-box {
+          background: #25212b;
+          color: #eee;
+        }
+      }
+
+      .webrtc-debug-title {
+        font-size: 19px;
+        font-weight: 800;
+        margin-bottom: 12px;
+      }
+
+      .webrtc-debug-text {
+        white-space: pre-line;
+        line-height: 1.55;
+        font-size: 14px;
+        opacity: .9;
+        margin-bottom: 18px;
+      }
+
+      #webrtcDebugClose {
+        width: 100%;
+        border: 0;
+        border-radius: 13px;
+        padding: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        background: #8f7cff;
+        color: white;
+      }
+    `;
+
+    document.head.appendChild(style);
+    document.body.appendChild(debugPopup);
+
+    debugTitle = document.getElementById("webrtcDebugTitle");
+    debugText = document.getElementById("webrtcDebugText");
+    debugClose = document.getElementById("webrtcDebugClose");
+
+    debugClose.onclick = () => {
+      debugPopup.style.display = "none";
+    };
+
+    debugPopup.onclick = (e) => {
+      if (e.target === debugPopup) {
+        debugPopup.style.display = "none";
+      }
+    };
+  }
+
+  function showDebug(title, message) {
+    createDebugPopup();
+
+    debugTitle.textContent = title;
+    debugText.textContent = message;
+
+    debugPopup.style.display = "flex";
+  }
+
+  window.showWebRTCError = function (reason, detail = "") {
+    showDebug(
+      "연결할 수 없어요",
+      `원인:\n${reason}\n\n현재 상태:\n${detail || "연결 실패"}\n\n가능한 원인:\n• 상대방의 인터넷 연결 문제\n• P2P 연결이 네트워크에서 차단됨\n• 상대방이 방을 나감\n• 연결 정보 교환 실패\n• 모바일 브라우저가 연결을 종료함`
+    );
+  };
+
+  window.showWebRTCStatus = function (state) {
+    const messages = {
+      new: "연결 준비 중...",
+      checking: "상대방과 연결을 확인하는 중...",
+      connected: "상대방과 연결되었습니다!",
+      completed: "P2P 연결 완료!",
+      disconnected: "연결이 끊어졌습니다.",
+      failed: "P2P 연결에 실패했습니다.",
+      closed: "연결이 종료되었습니다."
+    };
+
+    const message = messages[state] || `현재 상태: ${state}`;
+
+    if (state === "failed" || state === "disconnected") {
+      showDebug("연결 문제", message);
+    }
+  };
+
+  /*
+   * 기존 RTCPeerConnection을 감시
+   */
+  const OriginalRTCPeerConnection = window.RTCPeerConnection;
+
+  if (!OriginalRTCPeerConnection) {
+    showDebug(
+      "WebRTC 지원 안 됨",
+      "이 브라우저에서는 RTCPeerConnection을 사용할 수 없습니다."
+    );
+    return;
+  }
+
+  window.RTCPeerConnection = function (...args) {
+    const pc = new OriginalRTCPeerConnection(...args);
+
+    pc.addEventListener("connectionstatechange", () => {
+      const state = pc.connectionState;
+
+      console.log("[WebRTC] connectionState:", state);
+
+      if (state === "connected") {
+        console.log("[WebRTC] 연결 성공");
+      }
+
+      if (state === "failed") {
+        showDebug(
+          "P2P 연결 실패",
+          "WebRTC 연결 자체가 실패했습니다.\n\n상대방과 같은 방에는 들어왔지만 두 기기를 직접 연결하지 못했습니다."
+        );
+      }
+
+      if (state === "disconnected") {
+        showDebug(
+          "연결 끊김",
+          "상대방과의 P2P 연결이 끊어졌습니다.\n\n잠시 후 다시 연결을 시도해 보세요."
+        );
+      }
+
+      if (state === "closed") {
+        console.log("[WebRTC] 연결 종료");
+      }
+    });
+
+    pc.addEventListener("iceconnectionstatechange", () => {
+      const state = pc.iceConnectionState;
+
+      console.log("[WebRTC] ICE 상태:", state);
+
+      if (state === "failed") {
+        showDebug(
+          "네트워크 연결 실패",
+          "두 기기 사이의 P2P 경로를 찾지 못했습니다.\n\n인터넷은 연결되어 있어도 현재 네트워크 환경에서는 직접 연결이 막힐 수 있습니다."
+        );
+      }
+    });
+
+    return pc;
+  };
+
+  /*
+   * new RTCPeerConnection()이 instanceof 등에서
+   * 문제를 일으키지 않도록 prototype 연결
+   */
+  window.RTCPeerConnection.prototype =
+    OriginalRTCPeerConnection.prototype;
+
+  console.log("[WebRTC 진단] 활성화됨");
+})();
+
+</script>
+
+</body>
+</html>
