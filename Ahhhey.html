@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Phone</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background: #111;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app {
+  width: 100%;
+  max-width: 430px;
+  height: 100vh;
+  margin: auto;
+  background: #050505;
+  position: relative;
+  overflow: hidden;
+}
+
+.screen {
+  display: none;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+}
+
+.screen.active {
+  display: flex;
+  flex-direction: column;
+}
+
+h1 {
+  font-size: 32px;
+  margin: 10px 0 25px;
+}
+
+input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: #1c1c1e;
+  color: white;
+  padding: 16px;
+  border-radius: 14px;
+  font-size: 20px;
+  text-align: center;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+  color: white;
+}
+
+.primary {
+  margin-top: 15px;
+  padding: 16px;
+  border-radius: 15px;
+  background: #0a84ff;
+  font-size: 17px;
+}
+
+.status {
+  margin-top: 12px;
+  color: #888;
+  text-align: center;
+}
+
+.keypad {
+  margin-top: auto;
+  margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.key {
+  width: 75px;
+  height: 75px;
+  margin: auto;
+  border-radius: 50%;
+  background: #222;
+  font-size: 27px;
+}
+
+.key:active {
+  background: #444;
+}
+
+.call-button {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  background: #30d158;
+  font-size: 30px;
+  margin: auto;
+}
+
+.bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 75px;
+  display: flex;
+  background: #151515;
+  border-top: 1px solid #292929;
+}
+
+.tab {
+  flex: 1;
+  background: transparent;
+  color: #777;
+  font-size: 13px;
+}
+
+.tab.active {
+  color: #0a84ff;
+}
+
+.call-screen {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: #292929;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 45px;
+  margin-bottom: 25px;
+}
+
+.call-name {
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.call-number {
+  color: #999;
+  margin-top: 7px;
+}
+
+.call-state {
+  margin-top: 18px;
+  color: #aaa;
+}
+
+.call-controls {
+  margin-top: 70px;
+  display: flex;
+  gap: 35px;
+}
+
+.control {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background: #292929;
+  font-size: 25px;
+}
+
+.control.on {
+  background: white;
+  color: black;
+}
+
+.hangup {
+  background: #ff453a;
+}
+
+.incoming {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: #080808;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.incoming.show {
+  display: flex;
+}
+
+.incoming-actions {
+  display: flex;
+  gap: 70px;
+  margin-top: 70px;
+}
+
+.accept,
+.reject {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  font-size: 30px;
+}
+
+.accept {
+  background: #30d158;
+}
+
+.reject {
+  background: #ff453a;
+}
+
+#log {
+  position: absolute;
+  left: 10px;
+  bottom: 78px;
+  font-size: 10px;
+  color: #333;
+  pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- 번호 설정 -->
+  <section id="setup" class="screen active">
+    <h1>전화 설정</h1>
+
+    <input
+      id="myNumber"
+      maxlength="13"
+      placeholder="010-0000-0000"
+      inputmode="numeric">
+
+    <button class="primary" onclick="startPhone()">
+      이 번호 사용하기
+    </button>
+
+    <div id="setupStatus" class="status">
+      원하는 가상 전화번호를 입력하세요.
+    </div>
+  </section>
+
+
+  <!-- 전화 -->
+  <section id="dial" class="screen">
+
+    <h1>전화</h1>
+
+    <input
+      id="dialNumber"
+      readonly
+      placeholder="번호 입력">
+
+    <div class="keypad">
+
+      <button class="key" onclick="pressKey('1')">1</button>
+      <button class="key" onclick="pressKey('2')">2</button>
+      <button class="key" onclick="pressKey('3')">3</button>
+
+      <button class="key" onclick="pressKey('4')">4</button>
+      <button class="key" onclick="pressKey('5')">5</button>
+      <button class="key" onclick="pressKey('6')">6</button>
+
+      <button class="key" onclick="pressKey('7')">7</button>
+      <button class="key" onclick="pressKey('8')">8</button>
+      <button class="key" onclick="pressKey('9')">9</button>
+
+      <button class="key" onclick="pressKey('*')">*</button>
+      <button class="key" onclick="pressKey('0')">0</button>
+      <button class="key" onclick="backspace()">⌫</button>
+
+      <button></button>
+
+      <button class="call-button" onclick="makeCall()">☎</button>
+
+      <button></button>
+    </div>
+
+    <div class="bottom">
+      <button class="tab active">⌨<br>전화</button>
+      <button class="tab" onclick="showContacts()">👤<br>연락처</button>
+      <button class="tab" onclick="showRecent()">◷<br>최근 통화</button>
+    </div>
+
+  </section>
+
+
+  <!-- 통화 화면 -->
+  <section id="call" class="screen call-screen">
+
+    <div class="avatar">☎</div>
+
+    <div id="callName" class="call-name">전화번호</div>
+    <div id="callNumber" class="call-number"></div>
+    <div id="callState" class="call-state">연결 중...</div>
+
+    <div class="call-controls">
+
+      <button id="muteBtn"
+              class="control"
+              onclick="toggleMute()">🎙</button>
+
+      <button class="control"
+              onclick="toggleSpeaker()">🔊</button>
+
+      <button class="control hangup"
+              onclick="hangUp()">☎</button>
+
+    </div>
+
+  </section>
+
+
+  <!-- 수신 전화 -->
+  <div id="incoming" class="incoming">
+
+    <div class="avatar">☎</div>
+
+    <div class="call-name">수신 전화</div>
+
+    <div id="incomingNumber"
+         class="call-number"></div>
+
+    <div class="call-state">
+      전화가 왔습니다
+    </div>
+
+    <div class="incoming-actions">
+
+      <button class="reject"
+              onclick="rejectCall()">✕</button>
+
+      <button class="accept"
+              onclick="acceptCall()">☎</button>
+
+    </div>
+
+  </div>
+
+  <div id="log"></div>
+
+</div>
+
+
+<script>
+/* =========================================================
+   SUPABASE
+========================================================= */
+
+const SUPABASE_URL =
+  "https://ajrysthcqilncygvemum.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_0PWrkROtp3VVjV0KP0Kcow_Dnsm5vhF";
+
+/*
+  publishable key는 클라이언트에서 사용.
+  service_role / secret key는 절대 넣지 않는다.
+*/
+
+const { createClient } =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+/* =========================================================
+   상태
+========================================================= */
+
+let channel = null;
+
+let myNumber = "";
+
+let currentCall = null;
+
+let incomingCall = null;
+
+let peer = null;
+
+let localStream = null;
+
+let remoteAudio = null;
+
+let muted = false;
+
+let speakerOn = true;
+
+
+/* =========================================================
+   화면
+========================================================= */
+
+function showScreen(id) {
+
+  document
+    .querySelectorAll(".screen")
+    .forEach(x => x.classList.remove("active"));
+
+  document
+    .getElementById(id)
+    .classList.add("active");
+}
+
+
+/* =========================================================
+   로그
+========================================================= */
+
+function log(text) {
+
+  console.log("[PHONE]", text);
+
+  document.getElementById("log").textContent =
+    text;
+}
+
+
+/* =========================================================
+   번호 포맷
+========================================================= */
+
+function formatNumber(value) {
+
+  value = value.replace(/\D/g, "");
+
+  if (value.length <= 3)
+    return value;
+
+  if (value.length <= 7)
+    return value.slice(0,3) + "-" +
+           value.slice(3);
+
+  return value.slice(0,3) + "-" +
+         value.slice(3,7) + "-" +
+         value.slice(7,11);
+}
+
+
+/* =========================================================
+   번호 설정
+========================================================= */
+
+document
+  .getElementById("myNumber")
+  .addEventListener("input", e => {
+
+    e.target.value =
+      formatNumber(e.target.value);
+
+  });
+
+
+async function startPhone() {
+
+  myNumber =
+    document
+      .getElementById("myNumber")
+      .value
+      .trim();
+
+  if (!myNumber) {
+
+    alert("전화번호를 입력하세요.");
+
+    return;
+  }
+
+  localStorage.setItem(
+    "fakePhoneNumber",
+    myNumber
+  );
+
+  await connectRealtime();
+
+  document.getElementById("setupStatus")
+    .textContent =
+      "온라인 상태입니다.";
+
+  showScreen("dial");
+}
+
+
+/* =========================================================
+   기존 번호 자동 복구
+========================================================= */
+
+window.addEventListener("load", () => {
+
+  const saved =
+    localStorage.getItem(
+      "fakePhoneNumber"
+    );
+
+  if (saved) {
+
+    document
+      .getElementById("myNumber")
+      .value = saved;
+
+  }
+
+});
+
+
+/* =========================================================
+   SUPABASE REALTIME
+========================================================= */
+
+async function connectRealtime() {
+
+  if (channel)
+    return;
+
+  /*
+    모든 전화기가 같은 채널에 들어간다.
+    실제 통화 데이터는 Broadcast로 교환한다.
+  */
+
+  channel =
+    supabase.channel(
+      "fake-phone-network",
+      {
+        config: {
+          presence: {
+            key: myNumber
+          }
+        }
+      }
+    );
+
+
+  channel.on(
+    "broadcast",
+    { event: "phone" },
+    ({ payload }) => {
+
+      handlePhoneEvent(payload);
+
+    }
+  );
+
+
+  channel.on(
+    "presence",
+    { event: "sync" },
+    () => {
+
+      log("온라인 사용자 목록 동기화");
+
+    }
+  );
+
+
+  const status =
+    await channel.subscribe(
+      async status => {
+
+        if (status === "SUBSCRIBED") {
+
+          await channel.track({
+
+            number: myNumber,
+
+            online: true,
+
+            time: Date.now()
+
+          });
+
+          log("전화 네트워크 연결됨");
+
+        }
+
+      }
+    );
+}
+
+
+/* =========================================================
+   Broadcast
+========================================================= */
+
+async function sendPhoneEvent(payload) {
+
+  if (!channel)
+    return;
+
+  await channel.send({
+
+    type: "broadcast",
+
+    event: "phone",
+
+    payload
+
+  });
+}
+
+
+/* =========================================================
+   수신 이벤트
+========================================================= */
+
+function handlePhoneEvent(data) {
+
+  if (!data)
+    return;
+
+
+  /* 다른 사람에게 온 전화 */
+
+  if (
+    data.type === "call"
+    &&
+    data.to === myNumber
+  ) {
+
+    incomingCall = data;
+
+    document
+      .getElementById("incomingNumber")
+      .textContent =
+        data.from;
+
+    document
+      .getElementById("incoming")
+      .classList.add("show");
+
+    return;
+  }
+
+
+  /* 수신자가 전화를 받음 */
+
+  if (
+    data.type === "accepted"
+    &&
+    currentCall
+    &&
+    data.callId === currentCall.callId
+  ) {
+
+    currentCall.remoteAccepted = true;
+
+    startCallerPeer();
+
+    return;
+  }
+
+
+  /* 수신자가 거절 */
+
+  if (
+    data.type === "rejected"
+    &&
+    currentCall
+    &&
+    data.callId === currentCall.callId
+  ) {
+
+    document.getElementById("callState")
+      .textContent = "통화가 거절되었습니다.";
+
+    setTimeout(endCallUI, 1200);
+
+    return;
+  }
+
+
+  /* WebRTC offer */
+
+  if (
+    data.type === "offer"
+    &&
+    data.to === myNumber
+  ) {
+
+    receiveOffer(data);
+
+    return;
+  }
+
+
+  /* WebRTC answer */
+
+  if (
+    data.type === "answer"
+    &&
+    data.to === myNumber
+  ) {
+
+    receiveAnswer(data);
+
+    return;
+  }
+
+
+  /* ICE */
+
+  if (
+    data.type === "ice"
+    &&
+    data.to === myNumber
+  ) {
+
+    receiveIce(data);
+
+    return;
+  }
+
+
+  /* 상대방 종료 */
+
+  if (
+    data.type === "hangup"
+    &&
+    currentCall
+    &&
+    data.callId === currentCall.callId
+  ) {
+
+    document.getElementById("callState")
+      .textContent = "통화 종료";
+
+    endCallUI();
+
+  }
+
+}
+
+
+/* =========================================================
+   키패드
+========================================================= */
+
+function pressKey(key) {
+
+  const input =
+    document.getElementById("dialNumber");
+
+  input.value += key;
+
+}
+
+
+function backspace() {
+
+  const input =
+    document.getElementById("dialNumber");
+
+  input.value =
+    input.value.slice(0,-1);
+
+}
+
+
+/* =========================================================
+   전화 걸기
+========================================================= */
+
+async function makeCall() {
+
+  const target =
+    document
+      .getElementById("dialNumber")
+      .value
+      .trim();
+
+  if (!target) {
+
+    alert("전화번호를 입력하세요.");
+
+    return;
+  }
+
+  if (target === myNumber) {
+
+    alert("자기 자신에게 전화할 수 없습니다.");
+
+    return;
+  }
+
+
+  const callId =
+    crypto.randomUUID();
+
+
+  currentCall = {
+
+    callId,
+
+    from: myNumber,
+
+    to: target,
+
+    direction: "outgoing"
+
+  };
+
+
+  document.getElementById("callName")
+    .textContent = target;
+
+  document.getElementById("callNumber")
+    .textContent = target;
+
+  document.getElementById("callState")
+    .textContent = "전화 거는 중...";
+
+
+  showScreen("call");
+
+
+  await sendPhoneEvent({
+
+    type: "call",
+
+    callId,
+
+    from: myNumber,
+
+    to: target
+
+  });
+
+}
+
+
+/* =========================================================
+   전화 받기
+========================================================= */
+
+async function acceptCall() {
+
+  if (!incomingCall)
+    return;
+
+
+  document
+    .getElementById("incoming")
+    .classList.remove("show");
+
+
+  currentCall = {
+
+    callId: incomingCall.callId,
+
+    from: incomingCall.from,
+
+    to: myNumber,
+
+    direction: "incoming"
+
+  };
+
+
+  document.getElementById("callName")
+    .textContent =
+      incomingCall.from;
+
+  document.getElementById("callNumber")
+    .textContent =
+      incomingCall.from;
+
+  document.getElementById("callState")
+    .textContent =
+      "연결 중...";
+
+
+  showScreen("call");
+
+
+  await sendPhoneEvent({
+
+    type: "accepted",
+
+    callId: currentCall.callId,
+
+    from: myNumber,
+
+    to: incomingCall.from
+
+  });
+
+
+  await startReceiverPeer();
+
+}
+
+
+/* =========================================================
+   전화 거절
+========================================================= */
+
+async function rejectCall() {
+
+  if (!incomingCall)
+    return;
+
+
+  await sendPhoneEvent({
+
+    type: "rejected",
+
+    callId: incomingCall.callId,
+
+    from: myNumber,
+
+    to: incomingCall.from
+
+  });
+
+
+  document
+    .getElementById("incoming")
+    .classList.remove("show");
+
+
+  incomingCall = null;
+
+}
+
+
+/* =========================================================
+   WebRTC
+========================================================= */
+
+function createPeer(remoteNumber) {
+
+  const pc =
+    new RTCPeerConnection({
+
+      iceServers: [
+
+        {
+          urls:
+            "stun:stun.l.google.com:19302"
+        },
+
+        {
+          urls:
+            "stun:stun1.l.google.com:19302"
+        }
+
+      ]
+
+    });
+
+
+  pc.onicecandidate = async e => {
+
+    if (!e.candidate)
+      return;
+
+
+    await sendPhoneEvent({
+
+      type: "ice",
+
+      callId:
+        currentCall.callId,
+
+      from: myNumber,
+
+      to: remoteNumber,
+
+      candidate:
+        e.candidate
+
+    });
+
+  };
+
+
+  pc.ontrack = e => {
+
+    if (!remoteAudio) {
+
+      remoteAudio =
+        document.createElement("audio");
+
+      remoteAudio.autoplay = true;
+
+      remoteAudio.playsInline = true;
+
+      document.body.appendChild(
+        remoteAudio
+      );
+
+    }
+
+
+    remoteAudio.srcObject =
+      e.streams[0];
+
+  };
+
+
+  pc.onconnectionstatechange = () => {
+
+    log(
+      "WebRTC: " +
+      pc.connectionState
+    );
+
+
+    if (
+      pc.connectionState ===
+      "connected"
+    ) {
+
+      document.getElementById("callState")
+        .textContent =
+          "통화 중";
+
+    }
+
+
+    if (
+      pc.connectionState ===
+        "failed"
+      ||
+      pc.connectionState ===
+        "disconnected"
+    ) {
+
+      document.getElementById("callState")
+        .textContent =
+          "연결이 끊어졌습니다.";
+
+    }
+
+  };
+
+
+  return pc;
+}
+
+
+/* =========================================================
+   발신자 WebRTC
+========================================================= */
+
+async function startCallerPeer() {
+
+  await getMicrophone();
+
+
+  peer =
+    createPeer(
+      currentCall.to
+    );
+
+
+  localStream
+    .getTracks()
+    .forEach(track => {
+
+      peer.addTrack(
+        track,
+        localStream
+      );
+
+    });
+
+
+  const offer =
+    await peer.createOffer();
+
+
+  await peer.setLocalDescription(
+    offer
+  );
+
+
+  await sendPhoneEvent({
+
+    type: "offer",
+
+    callId:
+      currentCall.callId,
+
+    from: myNumber,
+
+    to: currentCall.to,
+
+    offer
+
+  });
+
+}
+
+
+/* =========================================================
+   수신자 WebRTC
+========================================================= */
+
+async function startReceiverPeer() {
+
+  await getMicrophone();
+
+
+  peer =
+    createPeer(
+      currentCall.from
+    );
+
+
+  localStream
+    .getTracks()
+    .forEach(track => {
+
+      peer.addTrack(
+        track,
+        localStream
+      );
+
+    });
+
+}
+
+
+/* =========================================================
+   Offer 받기
+========================================================= */
+
+async function receiveOffer(data) {
+
+  if (!currentCall)
+    return;
+
+
+  if (!peer) {
+
+    await startReceiverPeer();
+
+  }
+
+
+  await peer.setRemoteDescription(
+
+    new RTCSessionDescription(
+      data.offer
+    )
+
+  );
+
+
+  const answer =
+    await peer.createAnswer();
+
+
+  await peer.setLocalDescription(
+    answer
+  );
+
+
+  await sendPhoneEvent({
+
+    type: "answer",
+
+    callId:
+      data.callId,
+
+    from: myNumber,
+
+    to: data.from,
+
+    answer
+
+  });
+
+}
+
+
+/* =========================================================
+   Answer 받기
+========================================================= */
+
+async function receiveAnswer(data) {
+
+  if (!peer)
+    return;
+
+
+  await peer.setRemoteDescription(
+
+    new RTCSessionDescription(
+      data.answer
+    )
+
+  );
+
+}
+
+
+/* =========================================================
+   ICE 받기
+========================================================= */
+
+async function receiveIce(data) {
+
+  if (!peer)
+    return;
+
+
+  try {
+
+    await peer.addIceCandidate(
+      new RTCIceCandidate(
+        data.candidate
+      )
+    );
+
+  } catch (err) {
+
+    console.warn(
+      "ICE 오류",
+      err
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   마이크
+========================================================= */
+
+async function getMicrophone() {
+
+  if (localStream)
+    return;
+
+
+  try {
+
+    localStream =
+      await navigator.mediaDevices
+        .getUserMedia({
+
+          audio: {
+
+            echoCancellation: true,
+
+            noiseSuppression: true,
+
+            autoGainControl: true
+
+          },
+
+          video: false
+
+        });
+
+  } catch (err) {
+
+    alert(
+      "마이크 권한이 필요합니다.\n\n" +
+      "브라우저 설정에서 마이크 권한을 허용해주세요."
+    );
+
+    throw err;
+
+  }
+
+}
+
+
+/* =========================================================
+   음소거
+========================================================= */
+
+function toggleMute() {
+
+  if (!localStream)
+    return;
+
+
+  muted = !muted;
+
+
+  localStream
+    .getAudioTracks()
+    .forEach(track => {
+
+      track.enabled =
+        !muted;
+
+    });
+
+
+  const btn =
+    document.getElementById(
+      "muteBtn"
+    );
+
+
+  btn.classList.toggle(
+    "on",
+    muted
+  );
+
+
+  btn.textContent =
+    muted ? "🔇" : "🎙";
+
+}
+
+
+/* =========================================================
+   스피커
+========================================================= */
+
+function toggleSpeaker() {
+
+  speakerOn =
+    !speakerOn;
+
+
+  if (remoteAudio) {
+
+    remoteAudio.volume =
+      speakerOn ? 1 : 0;
+
+  }
+
+}
+
+
+/* =========================================================
+   종료
+========================================================= */
+
+async function hangUp() {
+
+  if (currentCall) {
+
+    await sendPhoneEvent({
+
+      type: "hangup",
+
+      callId:
+        currentCall.callId,
+
+      from: myNumber,
+
+      to:
+        currentCall.direction ===
+        "outgoing"
+          ? currentCall.to
+          : currentCall.from
+
+    });
+
+  }
+
+
+  endCallUI();
+
+}
+
+
+function endCallUI() {
+
+  if (peer) {
+
+    peer.close();
+
+    peer = null;
+
+  }
+
+
+  if (localStream) {
+
+    localStream
+      .getTracks()
+      .forEach(track =>
+        track.stop()
+      );
+
+    localStream = null;
+
+  }
+
+
+  if (remoteAudio) {
+
+    remoteAudio.srcObject =
+      null;
+
+    remoteAudio.remove();
+
+    remoteAudio = null;
+
+  }
+
+
+  currentCall = null;
+
+  incomingCall = null;
+
+  document
+    .getElementById("incoming")
+    .classList.remove("show");
+
+
+  showScreen("dial");
+
+}
+
+
+/* =========================================================
+   연락처 / 최근통화
+========================================================= */
+
+function showContacts() {
+
+  alert(
+    "연락처 기능은 다음 버전에서 추가할 수 있어요."
+  );
+
+}
+
+
+function showRecent() {
+
+  alert(
+    "최근 통화 기록은 다음 버전에서 추가할 수 있어요."
+  );
+
+}
+</script>
+
+</body>
+</html>
