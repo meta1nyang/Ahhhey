@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>VIO STREAM</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#0b0b0d;color:#f5f5f7;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100vh}.app{min-height:100vh;padding-bottom:78px;display:none}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+.top{height:64px;display:flex;align-items:center;gap:20px;padding:0 5vw;position:sticky;top:0;z-index:30;background:#0b0b0ddd;backdrop-filter:blur(18px);border-bottom:1px solid #1e1e22}
+.logo{font-weight:900;font-size:23px;letter-spacing:-1.5px}.logo span{font-weight:400;color:#888}
+.nav{display:flex;gap:18px}.nav button,.more{border:0;background:none;color:#999;font-size:13px}.nav button.active{color:#fff}
+.actions{margin-left:auto;display:flex;gap:8px}.icon{width:38px;height:38px;border:1px solid #303036;border-radius:11px;background:#17171b;color:#fff}
+.hero{min-height:455px;padding:65px 5vw 45px;display:flex;align-items:end;background:linear-gradient(90deg,#0b0b0d 0%,#0b0b0dcc 35%,#0b0b0d22 80%,#0b0b0d 100%),linear-gradient(0deg,#0b0b0d,transparent 40%),radial-gradient(circle at 75% 25%,#777 0,#29292e 28%,#111115 63%,#0b0b0d 100%)}
+.heroText{max-width:570px}.eyebrow{font-size:11px;letter-spacing:3px;color:#aaa;margin-bottom:14px}.hero h1{font-size:clamp(42px,7vw,74px);line-height:.92;letter-spacing:-4px;margin:0 0 17px}.hero p{color:#c2c2c7;line-height:1.6;max-width:510px}.meta{color:#aaa;font-size:12px;margin:18px 0}.heroBtns{display:flex;gap:8px}.primary,.secondary{border:0;border-radius:10px;padding:12px 18px;font-weight:800}.primary{background:#fff;color:#111}.secondary{background:#29292e;color:#fff}
+.search{display:none;padding:14px 5vw;border-bottom:1px solid #222;gap:8px}.search.open{display:flex}.search input{flex:1;background:#17171b;border:1px solid #303036;border-radius:10px;padding:12px;color:#fff;outline:0}.search button{border:0;border-radius:10px;background:#fff;color:#111;padding:0 16px}
+.section{padding:29px 5vw 0}.sectionHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.section h2{font-size:19px;margin:0}.row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}.card{min-width:0}.thumb{aspect-ratio:16/9;border-radius:10px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--c1),var(--c2));border:1px solid #29292d}.thumb:after{content:"▶";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#111;opacity:0;transition:.15s}.card:hover .thumb:after{opacity:1}.duration{position:absolute;right:7px;bottom:7px;background:#050505dd;border-radius:5px;padding:3px 6px;font-size:10px;z-index:1}.savedMark{position:absolute;left:7px;top:7px;background:#fff;color:#111;border-radius:5px;padding:3px 6px;font-size:10px;z-index:1}.ctitle{font-size:13px;font-weight:750;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sub{font-size:11px;color:#85858b;margin-top:4px}.empty{text-align:center;color:#888;padding:55px 10px}
+.bottom{display:none}
+#accountPanel{display:none;position:fixed;right:5vw;top:58px;width:255px;background:#17171b;border:1px solid #303036;border-radius:14px;padding:12px;z-index:100;box-shadow:0 18px 55px #000b}.menuBtn{width:100%;padding:10px;border:0;background:transparent;color:#ddd;text-align:left;border-radius:8px}.menuBtn:hover{background:#24242a}.menuSep{height:1px;background:#2b2b30;margin:7px 0}
+.modalBackdrop{display:none;position:fixed;inset:0;background:#000c;z-index:200;place-items:center;padding:18px}.modalBox{width:min(760px,100%);max-height:90vh;overflow:auto;background:#151519;border:1px solid #333;border-radius:17px;padding:20px}.modalHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.modalHead h2{margin:0;font-size:20px}.videoBox{background:#050505;border-radius:11px;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden}.videoBox video{width:100%;height:100%;object-fit:contain}.videoFallback{text-align:center;color:#888}.videoFallback b{display:block;color:#fff;font-size:18px;margin-bottom:7px}.detailActions{display:flex;gap:8px;margin-top:10px}.detailActions button{border:0;background:#28282d;color:#fff;padding:10px 13px;border-radius:9px}.detailActions button.on{background:#fff;color:#111}
+#authGate{position:fixed;inset:0;z-index:1000;background:#09090b;display:grid;place-items:center;padding:20px}.authCard{width:min(430px,100%);background:#151519;border:1px solid #303036;border-radius:22px;padding:28px;box-shadow:0 25px 80px #000b}.authBrand{font-size:28px;font-weight:900;letter-spacing:-1.5px}.authBrand span{font-weight:400;color:#888}.authCard h1{font-size:27px;margin:27px 0 7px}.desc{font-size:13px;color:#999;margin:0 0 17px}.authCard input{width:100%;background:#0f0f12;border:1px solid #34343a;color:#fff;padding:13px;border-radius:10px;margin:5px 0;outline:0}.authCard input:focus{border-color:#777}.remember{display:flex;align-items:center;gap:7px;font-size:12px;color:#999;margin:9px 0}.remember input{width:auto;margin:0}.authPrimary{width:100%;border:0;border-radius:10px;padding:13px;background:#fff;color:#111;font-weight:800;margin-top:8px}.authPrimary:disabled{opacity:.5}.authSwitch{width:100%;border:0;background:none;color:#aaa;padding:12px}.authMsg{min-height:20px;text-align:center;font-size:12px;color:#aaa}.authNote{font-size:10px;line-height:1.5;color:#666;margin-top:15px}
+.formGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.formGrid>*{min-width:0}.wide{grid-column:1/-1}.formGrid input,.formGrid select,.formGrid textarea{width:100%;padding:11px;border-radius:9px;border:1px solid #333;background:#0f0f12;color:#fff}.formGrid textarea{min-height:100px;resize:vertical}
+@media(max-width:800px){.top{padding:0 16px}.nav{display:none}.hero{min-height:455px;padding:40px 17px}.hero h1{font-size:49px}.section{padding-left:16px;padding-right:16px}.row{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.row .card:nth-child(n+7){display:none}.bottom{display:flex;position:fixed;z-index:150;bottom:0;left:0;right:0;height:68px;background:#111114ee;backdrop-filter:blur(18px);border-top:1px solid #29292d;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom)}.bottom button{border:0;background:none;color:#888;font-size:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}.bottom button.active{color:#fff}.bottom b{font-size:19px}.formGrid{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style>
+</head>
+<body>
+
+<div id="authGate">
+ <div class="authCard">
+  <div class="authBrand">VIO<span>STREAM</span></div>
+  <h1 id="gateTitle">로그인</h1>
+  <p class="desc" id="gateDesc">VIO를 이용하려면 먼저 로그인해주세요.</p>
+  <input id="gateNickname" style="display:none" placeholder="닉네임">
+  <input id="gateEmail" type="email" autocomplete="email" placeholder="이메일">
+  <input id="gatePassword" type="password" autocomplete="current-password" placeholder="비밀번호">
+  <label class="remember"><input id="rememberEmail" type="checkbox"> 이 기기에서 이메일 기억하기</label>
+  <button class="authPrimary" id="gateSubmit">로그인</button>
+  <button class="authSwitch" id="gateSwitch">처음이신가요? 회원가입</button>
+  <div class="authMsg" id="gateMsg"></div>
+  <div class="authNote">로그인 세션은 Supabase가 관리합니다. 비밀번호는 이 페이지의 localStorage에 저장하지 않습니다.</div>
+ </div>
+</div>
+
+<div class="app" id="app">
+<header class="top">
+ <div class="logo">VIO<span>STREAM</span></div>
+ <nav class="nav">
+  <button class="active" data-page="home">홈</button><button data-page="movie">영화</button><button data-page="series">시리즈</button><button data-page="category">카테고리</button>
+ </nav>
+ <div class="actions"><button class="icon" id="searchBtn">⌕</button><button class="icon" id="profileBtn">◎</button></div>
+</header>
+
+<div class="search" id="searchBox"><input id="searchInput" placeholder="보고 싶은 영상을 검색하세요"><button id="doSearch">검색</button></div>
+
+<section class="hero">
+ <div class="heroText"><div class="eyebrow">VIO ORIGINAL</div><h1>AFTER<br>THE RAIN</h1><div class="meta">2026 · 12+ · 1시간 42분 · 드라마</div><p>비가 그친 도시에서 우연히 다시 만난 두 사람. 멈춰 있던 시간이 천천히 움직이기 시작한다.</p><div class="heroBtns"><button class="primary" onclick="play('AFTER THE RAIN')">▶ 재생</button><button class="secondary" onclick="toggleList('AFTER THE RAIN')">＋ 내 목록</button></div></div>
+</section>
+<main id="main"></main>
+
+<div id="accountPanel">
+ <div id="accountInfo" style="padding:6px 4px 10px"></div><div class="menuSep"></div>
+ <button class="menuBtn" id="myListBtn">♡ 내 목록</button>
+ <button class="menuBtn" id="historyBtn">◷ 시청 기록</button>
+ <button class="menuBtn" id="uploadBtn">＋ 영상 업로드</button>
+ <div class="menuSep"></div><button class="menuBtn" id="logoutBtn">로그아웃</button>
+</div>
+
+<div class="modalBackdrop" id="playerModal"><div class="modalBox"><div class="modalHead"><h2 id="playerTitle">영상</h2><button class="icon" onclick="closeModal('playerModal')">×</button></div><div class="videoBox"><video id="player" controls playsinline style="display:none"></video><div class="videoFallback" id="videoFallback"><b>재생 준비 중</b><span>영상 URL을 서버 카탈로그에 연결하면 실제 재생됩니다.</span></div></div><div class="detailActions"><button id="playerListBtn">♡ 내 목록</button><button id="playerHistoryBtn">◷ 기록에 저장</button></div></div></div>
+
+<div class="modalBackdrop" id="listModal"><div class="modalBox"><div class="modalHead"><h2 id="listTitle">내 목록</h2><button class="icon" onclick="closeModal('listModal')">×</button></div><div id="listContent"></div></div></div>
+
+<div class="modalBackdrop" id="uploadModal"><div class="modalBox"><div class="modalHead"><h2>영상 업로드</h2><button class="icon" onclick="closeModal('uploadModal')">×</button></div><p style="color:#999;font-size:13px">다음 단계에서 Supabase Storage와 영상 테이블을 연결하면 실제 업로드가 됩니다.</p><div class="formGrid"><input id="uploadTitle" placeholder="영상 제목"><select id="uploadCategory"><option>영화</option><option>시리즈</option><option>애니메이션</option><option>다큐멘터리</option><option>음악</option><input class="wide" id="uploadUrl" placeholder="영상 URL"><textarea class="wide" id="uploadDesc" placeholder="영상 설명"></textarea></div><button class="authPrimary" onclick="toast('업로드 API는 다음 단계에서 연결합니다.');closeModal('uploadModal')">업로드 등록</button></div></div>
+
+<nav class="bottom"><button class="active" data-bottom="home"><b>⌂</b>홈</button><button data-bottom="search"><b>⌕</b>검색</button><button data-bottom="upload"><b>＋</b>업로드</button><button data-bottom="list"><b>♡</b>내 목록</button><button data-bottom="profile"><b>◎</b>프로필</button></nav>
+</div>
+
+<script>
+const SUPABASE_URL="https://ajrysthcqilncygvemum.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_0PWrkROtp3VVjV0KP0Kcow_Dnsm5vhF";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
+const data=[
+ {title:"MIDNIGHT RADIO",sub:"시네마틱 · 24분",d:"24:18",c:["#1b2430","#716b5c"],cat:"영화"},
+ {title:"고양이와 비 오는 오후",sub:"브이로그 · 12분",d:"12:04",c:["#45545a","#b5a58a"],cat:"다큐멘터리"},
+ {title:"NEON CITY",sub:"SF · 38분",d:"38:51",c:["#111827","#7c3aed"],cat:"시리즈"},
+ {title:"THE LITTLE CIRCUS",sub:"애니메이션 · 8분",d:"08:42",c:["#5b1d20","#e2a83b"],cat:"애니메이션"},
+ {title:"BLUE HOUR",sub:"뮤직필름 · 5분",d:"05:31",c:["#182b48","#6b8dbd"],cat:"음악"},
+ {title:"ARCHIVE 01",sub:"다큐멘터리 · 21분",d:"21:17",c:["#393939","#9b9b8d"],cat:"다큐멘터리"},
+ {title:"DREAM ROOM",sub:"드림코어 · 14분",d:"14:09",c:["#463b6b","#a8c5b0"],cat:"애니메이션"},
+ {title:"LAST TRAIN",sub:"단편 · 17분",d:"17:33",c:["#262626","#b14b3d"],cat:"영화"},
+ {title:"PIXEL SUMMER",sub:"애니메이션 · 10분",d:"10:22",c:["#355c7d","#f6c667"],cat:"애니메이션"},
+ {title:"NO SIGNAL",sub:"미스터리 · 31분",d:"31:02",c:["#111","#555"],cat:"시리즈"}
+];
+let currentUser=null,currentTitle="",gateSignup=false;
+
+const $=id=>document.getElementById(id);
+const esc=x=>String(x).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+function toast(msg){let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";Object.assign(t.style,{position:"fixed",left:"50%",bottom:"90px",transform:"translateX(-50%)",background:"#fff",color:"#111",padding:"12px 16px",borderRadius:"12px",zIndex:9999,fontSize:"13px",fontWeight:"700"});document.body.appendChild(t)}t.textContent=msg;t.style.opacity=1;clearTimeout(window._tt);window._tt=setTimeout(()=>t.style.opacity=0,2200)}
+function key(type){return `vio:${type}:${currentUser?.id||"guest"}`}
+function get(type){try{return JSON.parse(localStorage.getItem(key(type))||"[]")}catch{return[]}}
+function set(type,v){localStorage.setItem(key(type),JSON.stringify(v))}
+function isSaved(title){return get("list").includes(title)}
+function toggleList(title){let a=get("list");a=a.includes(title)?a.filter(x=>x!==title):[...a,title];set("list",a);updatePlayerButton();toast(a.includes(title)?"내 목록에 추가했어요":"내 목록에서 삭제했어요");render()}
+function addHistory(title){let a=get("history").filter(x=>x!==title);a.unshift(title);set("history",a.slice(0,30))}
+function card(v){return `<article class="card" onclick="play('${v.title.replaceAll("'","")}')"><div class="thumb" style="--c1:${v.c[0]};--c2:${v.c[1]}">${isSaved(v.title)?'<span class="savedMark">♡</span>':''}<span class="duration">${v.d}</span></div><div class="ctitle">${esc(v.title)}</div><div class="sub">${esc(v.sub)}</div></article>`}
+function section(title,items){return `<section class="section"><div class="sectionHead"><h2>${esc(title)}</h2></div><div class="row">${items.map(card).join("")}</div></section>`}
+function render(items=data){$("main").innerHTML=section("지금 뜨는 영상",items.slice(0,5))+section("새로 올라왔어요",items.slice(5))+section("계속 시청하기",items.slice(2,7))}
+function play(title){currentTitle=title;$("playerTitle").textContent=title;$("player").style.display="none";$("videoFallback").style.display="block";updatePlayerButton();addHistory(title);openModal("playerModal")}
+function updatePlayerButton(){const b=$("playerListBtn");b.textContent=isSaved(currentTitle)?"✓ 내 목록에 저장됨":"♡ 내 목록";b.classList.toggle("on",isSaved(currentTitle))}
+function openModal(id){$(id).style.display="grid"}function closeModal(id){$(id).style.display="none";if(id==="playerModal"){$("player").pause();$("player").removeAttribute("src")}}
+function showList(type){const titles=get(type),items=titles.map(t=>data.find(x=>x.title===t)).filter(Boolean);$("listTitle").textContent=type==="list"?"내 목록":"시청 기록";$("listContent").innerHTML=items.length?`<div class="row">${items.map(card).join("")}</div>`:`<div class="empty">${type==="list"?"찜한 영상이 아직 없어요.":"시청 기록이 아직 없어요."}</div>`;openModal("listModal")}
+function filterCategory(cat){$("main").innerHTML=section(cat,data.filter(x=>x.cat===cat))}
+function search(){const q=$("searchInput").value.trim().toLowerCase();if(!q){render();return}const f=data.filter(x=>(x.title+" "+x.sub+" "+x.cat).toLowerCase().includes(q));$("main").innerHTML=f.length?section(`"${q}" 검색 결과`,f):'<div class="empty">검색 결과가 없어요.</div>'}
+
+$("searchBtn").onclick=()=>{$("searchBox").classList.toggle("open");$("searchInput").focus()};$("doSearch").onclick=search;$("searchInput").onkeydown=e=>{if(e.key==="Enter")search()};
+$("profileBtn").onclick=()=>{$("accountPanel").style.display=$("accountPanel").style.display==="block"?"none":"block"};
+$("playerListBtn").onclick=()=>toggleList(currentTitle);$("playerHistoryBtn").onclick=()=>{addHistory(currentTitle);toast("시청 기록에 저장했어요")};
+$("myListBtn").onclick=()=>{ $("accountPanel").style.display="none";showList("list")};
+$("historyBtn").onclick=()=>{ $("accountPanel").style.display="none";showList("history")};
+$("uploadBtn").onclick=()=>{ $("accountPanel").style.display="none";openModal("uploadModal")};
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");const p=b.dataset.page;if(p==="home")render();else if(p==="movie")filterCategory("영화");else if(p==="series")filterCategory("시리즈");else $("main").innerHTML=section("카테고리",data)});
+document.querySelectorAll(".bottom button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".bottom button").forEach(x=>x.classList.remove("active"));b.classList.add("active");const p=b.dataset.bottom;if(p==="home")render();else if(p==="search"){$("searchBox").classList.add("open");$("searchInput").focus()}else if(p==="upload")openModal("uploadModal");else if(p==="list")showList("list");else $("profileBtn").click()});
+
+function authMsg(msg,ok=false){$("gateMsg").textContent=msg;$("gateMsg").style.color=ok?"#9fe3aa":"#aaa"}
+function updateGate(){ $("gateTitle").textContent=gateSignup?"회원가입":"로그인";$("gateDesc").textContent=gateSignup?"VIO 계정을 만들어 시작하세요.":"VIO를 이용하려면 먼저 로그인해주세요.";$("gateNickname").style.display=gateSignup?"block":"none";$("gatePassword").autocomplete=gateSignup?"new-password":"current-password";$("gateSubmit").textContent=gateSignup?"회원가입":"로그인";$("gateSwitch").textContent=gateSignup?"이미 계정이 있어요":"처음이신가요? 회원가입";authMsg("")}
+$("gateSwitch").onclick=()=>{gateSignup=!gateSignup;updateGate()};
+$("gateSubmit").onclick=async()=>{
+ const email=$("gateEmail").value.trim(),pass=$("gatePassword").value,nick=$("gateNickname").value.trim();
+ if(!email||!pass)return authMsg("이메일과 비밀번호를 입력해주세요.");
+ if(gateSignup&&pass.length<6)return authMsg("비밀번호는 6자 이상이어야 합니다.");
+ $("gateSubmit").disabled=true;authMsg(gateSignup?"회원가입 중…":"로그인 중…");
+ try{
+  const r=gateSignup?await supabaseClient.auth.signUp({email,password:pass,options:{data:{nickname:nick||email.split("@")[0]}}}):await supabaseClient.auth.signInWithPassword({email,password:pass});
+  if(r.error)throw r.error;
+  if($("rememberEmail").checked)localStorage.setItem("vio:email",email);else localStorage.removeItem("vio:email");
+  if(r.data.session)authMsg(gateSignup?"회원가입 및 로그인 완료!":"로그인 완료!",true);
+  else authMsg("가입은 완료됐어요. 이메일 인증 메일을 확인한 뒤 로그인해주세요.",true);
+ }catch(e){
+  const m=e.message||"인증에 실패했습니다.";
+  authMsg(m.includes("Invalid login credentials")?"이메일 또는 비밀번호가 올바르지 않아요.":m.includes("User already registered")?"이미 가입된 이메일이에요. 로그인해주세요.":m.includes("Email not confirmed")?"이메일 인증을 먼저 완료해주세요.":m);
+ }finally{$("gateSubmit").disabled=false}
+};
+$("gateEmail").value=localStorage.getItem("vio:email")||"";$("rememberEmail").checked=!!localStorage.getItem("vio:email");
+$("gatePassword").onkeydown=e=>{if(e.key==="Enter")$("gateSubmit").click()};
+
+function updateAccount(user){
+ currentUser=user;
+ if(!user){$("authGate").style.display="grid";$("app").style.display="none";return}
+ $("authGate").style.display="none";$("app").style.display="block";
+ const n=esc(user.user_metadata?.nickname||user.email?.split("@")[0]||"사용자");
+ $("accountInfo").innerHTML=`<b>${n}</b><div style="font-size:11px;color:#888;margin-top:4px">${esc(user.email||"")}</div>`;
+ render();
+}
+$("logoutBtn").onclick=async()=>{await supabaseClient.auth.signOut();$("accountPanel").style.display="none";toast("로그아웃했습니다.")};
+
+(async()=>{
+ const {data,error}=await supabaseClient.auth.getSession();
+ if(error){console.error(error);authMsg("Supabase에 연결하지 못했어요. 페이지를 새로고침해보세요.");updateAccount(null);return}
+ updateAccount(data.session?.user||null);
+})();
+supabaseClient.auth.onAuthStateChange((_event,session)=>updateAccount(session?.user||null));
+</script>
+</body>
+</html>
